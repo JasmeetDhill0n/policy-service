@@ -1,53 +1,36 @@
 pipeline {
     agent any
 
-    environment {
-        AWS_ACCOUNT_ID = "639092584351"
-        AWS_REGION = "us-east-2"
-        ECR_REPO = "policy-service"
-        IMAGE_TAG = "latest"
-        ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
-    }
-
     stages {
 
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/JasmeetDhill0n/policy-service'
             }
         }
 
         stage('Build Maven') {
             steps {
-                bat 'mvnw clean package -DskipTests'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Docker Build') {
             steps {
-                bat "docker build -t %ECR_URL% ."
+                sh 'docker build -t policy-service:latest .'
             }
         }
 
-        stage('AWS ECR Login') {
+        stage('Docker Run') {
             steps {
-                bat """
-                aws ecr get-login-password --region %AWS_REGION% ^
-                | docker login --username AWS --password-stdin %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com
-                """
-            }
-        }
-
-        stage('Push to ECR') {
-            steps {
-                bat "docker push %ECR_URL%"
+                sh 'docker run -d -p 8080:8080 --name policy-service policy-service:latest || true'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                bat "kubectl apply -f k8s\\deployment.yml"
-                bat "kubectl apply -f k8s\\service.yml"
+                sh 'kubectl apply -f k8s/deployment.yaml'
+                sh 'kubectl apply -f k8s/service.yaml'
             }
         }
     }
