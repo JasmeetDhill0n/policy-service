@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        SONARQUBE_ENV = credentials('sonarqube-token')     // Your Sonar token
+    }
+
     stages {
 
         stage('Checkout') {
@@ -9,15 +13,25 @@ pipeline {
             }
         }
 
-        stage('Build Maven') {
+        stage('SonarQube Analysis') {
             steps {
-                withMaven(maven: 'MAVEN3') {
-                    sh "mvn clean package -DskipTests"
+                withSonarQubeEnv('sonarqube-server') {
+                    sh """
+                        mvn clean verify sonar:sonar \
+                        -Dsonar.projectKey=policy-service \
+                        -Dsonar.login=$SONARQUBE_ENV
+                    """
                 }
             }
         }
 
-
+        stage('Build Maven') {
+            steps {
+                withMaven(maven: 'MAVEN3') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
 
         stage('Docker Build') {
             steps {
@@ -27,14 +41,18 @@ pipeline {
 
         stage('Docker Run') {
             steps {
-                sh 'docker run -d -p 8080:8080 --name policy-service policy-service:latest || true'
+                sh '''
+                    # stop previous container if exists
+                    docker rm -f policy-service || true
+                    docker run -d -p 8080:8080 --name policy-service policy-service:latest
+                '''
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yaml'
-                sh 'kubectl apply -f k8s/service.yaml'
+                sh 'kubectl apply -f k8s/deployment.yml'
+                sh 'kubectl apply -f k8s/service.yml'
             }
         }
     }
