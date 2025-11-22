@@ -1,4 +1,6 @@
 package com.insurance.policyservice.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.insurance.policyservice.model.Policy;
 import com.insurance.policyservice.Service.PolicyService;
