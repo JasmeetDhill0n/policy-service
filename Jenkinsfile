@@ -41,15 +41,15 @@ pipeline {
             }
         }
 
-        stage('Docker Run') {
-            steps {
-                sh '''
-                    # stop previous container if exists
-                    docker rm -f policy-service || true
-                    docker run -d -p 8080:8080 --name policy-service policy-service:latest
-                '''
-            }
-        }
+       stage('Docker Run') {
+           steps {
+               sh '''
+                   docker rm -f policy-service || true
+                   docker run -d -p 8085:8080 --name policy-service policy-service:latest
+               '''
+           }
+       }
+
 
         stage('Deploy to Kubernetes') {
             steps {
