@@ -13,17 +13,20 @@ pipeline {
             }
         }
 
-       stage('SonarQube Analysis') {
-                  steps {
-                      withSonarQubeEnv('SonarQube-Local'){
-                          sh """
-                              mvn clean verify sonar:sonar \
+      stage('SonarQube Analysis') {
+          steps {
+              withMaven(maven: 'MAVEN3') {
+                  withSonarQubeEnv('SonarQube-Local') {
+                      sh """
+                          mvn clean verify sonar:sonar \
                               -Dsonar.projectKey=policy-service \
-                              -Dsonar.login=$SONARQUBE_ENV
-                          """
-                      }
+                              -Dsonar.host.url=http://host.docker.internal:9001 \
+                              -Dsonar.login=${SONARQUBE_ENV}
+                      """
                   }
               }
+          }
+      }
         stage('Build Maven') {
             steps {
                 withMaven(maven: 'MAVEN3') {
