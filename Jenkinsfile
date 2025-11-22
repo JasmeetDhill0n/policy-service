@@ -13,18 +13,17 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh """
-                        mvn clean verify sonar:sonar \
-                        -Dsonar.projectKey=policy-service \
-                        -Dsonar.login=$SONARQUBE_ENV
-                    """
-                }
-            }
-        }
-
+       stage('SonarQube Analysis') {
+                  steps {
+                      withSonarQubeEnv('SonarQube-Local'){
+                          sh """
+                              mvn clean verify sonar:sonar \
+                              -Dsonar.projectKey=policy-service \
+                              -Dsonar.login=$SONARQUBE_ENV
+                          """
+                      }
+                  }
+              }
         stage('Build Maven') {
             steps {
                 withMaven(maven: 'MAVEN3') {
