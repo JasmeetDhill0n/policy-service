@@ -24,8 +24,23 @@ public class PolicyController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Policy> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getPolicyById(id));
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        try {
+            Policy policy = service.getPolicyById(id);
+
+            if (policy == null) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body("Policy not found with id: " + id);
+            }
+
+            return ResponseEntity.ok(policy);
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Something went wrong while fetching policy. Error: " + e.getMessage());
+        }
     }
 
     @GetMapping
